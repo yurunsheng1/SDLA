@@ -1,29 +1,23 @@
-# PPO-SDLA on one HASARD task
+# Structural Dual Adaptation for Safe Reinforcement Learning
 
-A minimal review version for **Armament Burden, Level 1**. It adds a scalar SDLA solver and a learner adapter to the official HASARD PPO implementation. No training logs, checkpoints, manuscript files, or benchmark-result claims are included.
+[![arXiv](https://img.shields.io/badge/arXiv-2611.00636-b31b1b.svg)](https://arxiv.org/abs/2611.00636)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Implementation
+**Runsheng Yu, Zhuoyang Song, Zengde Deng, Qixin Zhang, Li Shen, Jiaxing Zhang**
 
-The dual uses a rolling history of paired **mini-batch reward-target means and step-cost means**. The history statistics are scaled by the ratio of the reference budget to HASARD's step-level safety bound. The objective is
+[Paper](https://arxiv.org/abs/2611.00636) · [PDF](https://arxiv.org/pdf/2611.00636)
 
-```text
-g(lambda) = tau * log mean(exp((R - lambda*C)/tau))
-            + lambda * (d - mean(C)) + lambda**2/(2*beta)
-```
+This repository provides a minimal **PPO-SDLA** implementation for **Armament Burden, Level 1**, built on the official [HASARD](https://github.com/TTomilin/HASARD) PPO implementation.
 
-`R` and `C` here denote scaled mini-batch summaries, not full-episode returns. This follows the existing HASARD implementation. The PPO parent updates lambda before forming the cost-adjusted advantage, once per mini-batch after history warm-up. The scalar solve holds those statistics fixed and uses stabilized log-mean-exp and bounded ternary search.
+## Overview
 
-Files:
+For a fixed policy, the exact bounded Lagrange multiplier response switches between its endpoints at the constraint boundary. **Structural DuaL Adaptation (SDLA)** introduces a surrogate dual objective combining current-cost centering, trajectory weighting, and quadratic regularization to obtain a unique continuous response. A bounded scalar search computes the multiplier without a dual gradient stepsize.
 
-- `dual.py`: NumPy objective and solver.
-- `learner.py`: adapter to HASARD's `PPOLagLearner`.
-- `install.py`: small, idempotent learner/safety-model registration patches for one pinned HASARD revision.
-- `train.py`: single-task training entry point.
-- `env_smoke.py`: headless environment check.
+The paper characterizes multiplier activation and feedback sensitivity, analyzes entropy-regularized tabular policies, and evaluates neural PPO/SAC variants on OmniSafe and HASARD. This repository contains the HASARD single-task PPO adapter, a standalone scalar solver, and runnable training and validation commands.
 
 ## Install
 
-Use Linux, Python 3.10 or 3.11, and a suitable PyTorch installation. A CUDA-enabled PyTorch build is needed for GPU training. The default settings are examples for reviewing the code, not a claim to reproduce a paper result.
+Use Linux, Python 3.10 or 3.11, and a suitable PyTorch installation. A CUDA-enabled PyTorch build is needed for GPU training. The training entry point provides a minimal single-task configuration.
 
 From this repository's root:
 
@@ -74,16 +68,51 @@ python -m sdla_hasard.train --device=gpu --seed=0 \
 
 The task and level are deliberately fixed by the entry point. Results and checkpoints go to `train_dir/`. W&B and video recording are disabled by default. Use a new experiment name for a fresh run; HASARD may otherwise resume an existing run.
 
+## Implementation
+
+The dual uses a rolling history of paired **mini-batch reward-target means and step-cost means**. The history statistics are scaled by the ratio of the reference budget to HASARD's step-level safety bound. The objective is
+
+```text
+g(lambda) = tau * log mean(exp((R - lambda*C)/tau))
+            + lambda * (d - mean(C)) + lambda**2/(2*beta)
+```
+
+`R` and `C` here denote scaled mini-batch summaries, not full-episode returns. This follows the existing HASARD implementation. The PPO parent updates lambda before forming the cost-adjusted advantage, once per mini-batch after history warm-up. The scalar solve holds those statistics fixed and uses stabilized log-mean-exp and bounded ternary search.
+
+Files:
+
+- `dual.py`: NumPy objective and solver.
+- `learner.py`: adapter to HASARD's `PPOLagLearner`.
+- `install.py`: small, idempotent learner/safety-model registration patches for one pinned HASARD revision.
+- `train.py`: single-task training entry point.
+- `env_smoke.py`: headless environment check.
+
 ## Validation
 
 Checked on Linux / Python 3.10 on 2026-11-03:
 
-- Four numerical solver tests passed.
+- Numerical solver unit tests passed.
 - Pinned-upstream registration passed twice (idempotency checked).
 - Headless Armament Burden Level 1 ran for 128 environment steps.
 - The documented CPU serial training check exited successfully and performed two learner updates, including dual updates. HASARD reported 512 simulator frames because of rollout/frame-skip granularity.
 
 This is a functional smoke check, not a full training or performance evaluation. GPU and long-run performance have not been validated in this preview.
+
+## Citation
+
+If you use SDLA in your research, please cite:
+
+```bibtex
+@misc{yu2026structuraldualadaptation,
+  title         = {Structural Dual Adaptation for Safe Reinforcement Learning},
+  author        = {Runsheng Yu and Zhuoyang Song and Zengde Deng and Qixin Zhang and Li Shen and Jiaxing Zhang},
+  year          = {2026},
+  eprint        = {2611.00636},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2611.00636}
+}
+```
 
 ## Attribution
 
