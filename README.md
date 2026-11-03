@@ -80,22 +80,11 @@ Results and checkpoints go to `train_dir/`. W&B and video recording are disabled
 
 ## Implementation
 
-The dual uses a rolling history of paired **mini-batch reward-target means and step-cost means**. The history statistics are scaled by the ratio of the reference budget to HASARD's step-level safety bound. The objective is
+PPO-SDLA uses rolling reward and cost summaries to construct the surrogate dual objective. The multiplier is computed with numerically stable log-mean-exp and bounded ternary search, then incorporated into HASARD's PPO learner.
 
-```text
-g(lambda) = tau * log mean(exp((R - lambda*C)/tau))
-            + lambda * (d - mean(C)) + lambda**2/(2*beta)
-```
-
-`R` and `C` here denote scaled mini-batch summaries, not full-episode returns. This follows the existing HASARD implementation. The PPO parent updates lambda before forming the cost-adjusted advantage, once per mini-batch after history warm-up. The scalar solve holds those statistics fixed and uses stabilized log-mean-exp and bounded ternary search.
-
-Files:
-
-- `dual.py`: NumPy objective and solver.
-- `learner.py`: adapter to HASARD's `PPOLagLearner`.
-- `install.py`: small, idempotent learner/safety-model registration patches for one pinned HASARD revision.
+- `dual.py`: surrogate objective and scalar solver.
+- `learner.py`: PPO-SDLA learner adapter.
 - `train.py`: HASARD training entry point.
-- `env_smoke.py`: headless environment check.
 
 ## Citation
 
