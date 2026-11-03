@@ -74,21 +74,6 @@ python -m sdla_hasard.train --device=gpu --seed=0 \
 
 The task and level are deliberately fixed by the entry point. Results and checkpoints go to `train_dir/`. W&B and video recording are disabled by default. Use a new experiment name for a fresh run; HASARD may otherwise resume an existing run.
 
-## Dual settings
-
-| Argument | Default |
-|---|---:|
-| `--sdla_temperature` | 1.0 |
-| `--sdla_beta` | 0.1 |
-| `--sdla_lambda_max` | 10.0 |
-| `--sdla_history` | 20 |
-| `--sdla_warmup` | 5 |
-| `--sdla_reference_budget` | 25.0 |
-| `--sdla_iterations` | 50 |
-| `--sdla_tolerance` | 0.0001 |
-
-The reference budget is an internal scaling convention, not a replacement for the Armament Burden episode budget supplied by HASARD.
-
 ## Validation
 
 Checked on Linux / Python 3.10 on 2026-11-03:
