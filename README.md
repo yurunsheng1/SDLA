@@ -7,17 +7,17 @@
 
 [Paper](https://arxiv.org/abs/2611.00636) · [PDF](https://arxiv.org/pdf/2611.00636)
 
-This repository provides a minimal **PPO-SDLA** implementation for **Armament Burden, Level 1**, built on the official [HASARD](https://github.com/TTomilin/HASARD) PPO implementation.
+This repository provides a minimal **PPO-SDLA** implementation on HASARD, with **Armament Burden, Level 1** as the default, built on the official [HASARD](https://github.com/TTomilin/HASARD) PPO implementation.
 
 ## Overview
 
 For a fixed policy, the exact bounded Lagrange multiplier response switches between its endpoints at the constraint boundary. **Structural DuaL Adaptation (SDLA)** introduces a surrogate dual objective combining current-cost centering, trajectory weighting, and quadratic regularization to obtain a unique continuous response. A bounded scalar search computes the multiplier without a dual gradient stepsize.
 
-The paper characterizes multiplier activation and feedback sensitivity, analyzes entropy-regularized tabular policies, and evaluates neural PPO/SAC variants on OmniSafe and HASARD. This repository contains the HASARD single-task PPO adapter, a standalone scalar solver, and runnable training and validation commands.
+The paper characterizes multiplier activation and feedback sensitivity, analyzes entropy-regularized tabular policies, and evaluates neural PPO/SAC variants on OmniSafe and HASARD. This repository contains the HASARD PPO adapter, a standalone scalar solver, and runnable training and validation commands.
 
 ## Install
 
-Use Linux, Python 3.10 or 3.11, and a suitable PyTorch installation. A CUDA-enabled PyTorch build is needed for GPU training. The training entry point provides a minimal single-task configuration.
+Use Linux, Python 3.10 or 3.11, and a suitable PyTorch installation. A CUDA-enabled PyTorch build is needed for GPU training. The training entry point provides a minimal training configuration.
 
 From this repository's root:
 
@@ -66,7 +66,17 @@ python -m sdla_hasard.train --device=gpu --seed=0 \
   --train_for_env_steps=1000000 --experiment=sdla_armament_l1_seed0
 ```
 
-The task and level are deliberately fixed by the entry point. Results and checkpoints go to `train_dir/`. W&B and video recording are disabled by default. Use a new experiment name for a fresh run; HASARD may otherwise resume an existing run.
+To run another HASARD task, set `--env`, `--level`, and its episode cost budget with `--safety_bound`. For example, Remedy Rush Level 1 with a budget of 5:
+
+```bash
+python -m sdla_hasard.train --device=gpu --seed=0 \
+  --env=remedy_rush --level=1 --safety_bound=5 \
+  --train_for_env_steps=1000000 --experiment=sdla_remedy_l1_seed0
+```
+
+Available tasks are `armament_burden`, `collateral_damage`, `detonators_dilemma`, `precipice_plunge`, `remedy_rush`, and `volcanic_venture`; levels are 1, 2, or 3.
+
+Results and checkpoints go to `train_dir/`. W&B and video recording are disabled by default. Use a new experiment name for a fresh run; HASARD may otherwise resume an existing run.
 
 ## Implementation
 
@@ -84,19 +94,8 @@ Files:
 - `dual.py`: NumPy objective and solver.
 - `learner.py`: adapter to HASARD's `PPOLagLearner`.
 - `install.py`: small, idempotent learner/safety-model registration patches for one pinned HASARD revision.
-- `train.py`: single-task training entry point.
+- `train.py`: HASARD training entry point.
 - `env_smoke.py`: headless environment check.
-
-## Validation
-
-Checked on Linux / Python 3.10 on 2026-11-03:
-
-- Numerical solver unit tests passed.
-- Pinned-upstream registration passed twice (idempotency checked).
-- Headless Armament Burden Level 1 ran for 128 environment steps.
-- The documented CPU serial training check exited successfully and performed two learner updates, including dual updates. HASARD reported 512 simulator frames because of rollout/frame-skip granularity.
-
-This is a functional smoke check, not a full training or performance evaluation. GPU and long-run performance have not been validated in this preview.
 
 ## Citation
 

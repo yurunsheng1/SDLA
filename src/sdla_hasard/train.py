@@ -1,4 +1,4 @@
-"""Train one HASARD task: Armament Burden Level 1."""
+"""Train PPO-SDLA on HASARD (default: Armament Burden Level 1)."""
 import sys
 
 
@@ -23,8 +23,12 @@ def parse_config(argv=None):
                         with_wandb=False, async_rl=False,
                         train_for_env_steps=1_000_000)
     cfg = parse_full_cfg(parser, argv)
-    if cfg.algo != "PPOCvx" or cfg.env != "armament_burden" or cfg.level != 1:
-        raise ValueError("This minimal entry point supports PPOCvx / Armament Burden Level 1 only")
+    if cfg.algo != "PPOCvx":
+        raise ValueError("This entry point supports PPOCvx only")
+    tasks = {"armament_burden", "collateral_damage", "detonators_dilemma",
+             "precipice_plunge", "remedy_rush", "volcanic_venture"}
+    if cfg.env not in tasks:
+        raise ValueError(f"Unknown HASARD task: {cfg.env}. Choose from {sorted(tasks)}")
     if cfg.with_vtrace:
         raise ValueError("This adapter expects GAE returns; use --with_vtrace=False")
     return cfg
